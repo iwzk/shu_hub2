@@ -219,5 +219,3 @@ return function(library, Window, Tab1)
     ------------------------------------------------------------------
     Window:SetOpen(true)
 end
-
-Faça o noclip desse codigo funcionar, sem alterar nada
