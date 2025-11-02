@@ -1,30 +1,21 @@
--- shu_hub2.lua → Fly + Zombie Idle + Korblox Leg + Headless (100% FUNCIONAL)
--- Sem fall, persistente, toggle visível, sem separador extra
+-- shu_hub2.lua → Fly + Korblox Leg + Headless (TOGGLE VISÍVEL 100%)
+-- Versão: 1.4 | Funcional, limpo, persistente
 
 return function(library, Window, Tab1)
-    getgenv().Config = {
-        Invite = "Shu hub",
-        Version = "1.1",
-    }
-
-    getgenv().luaguardvars = {
-        DiscordName = "username#0000",
-    }
+    getgenv().Config = { Invite = "Shu hub", Version = "1.4" }
+    getgenv().luaguardvars = { DiscordName = "username#0000" }
 
     local Settings = library:CreateSettingsTab(Window)
-    
-    -- SEÇÕES
     local Section1 = Tab1:AddSection("Geral", 1)
     local Section2 = Tab1:AddSection("Exploits", 2)
 
     ------------------------------------------------------------------
-    -- FLY + ZOMBIE IDLE (FORÇA ANIMAÇÃO, IGNORA FALL)
+    -- FLY + ZOMBIE IDLE (SEM ANIMAÇÃO DE FALL)
     ------------------------------------------------------------------
     getgenv().FlyActive = getgenv().FlyActive or false
     getgenv().FlyBV = nil
     getgenv().FlyRunService = nil
     getgenv().ZombieIdleTrack = nil
-    getgenv().DefaultAnims = {}
 
     local ZOMBIE_IDLE_ANIM_ID = "rbxassetid://616158929"
 
@@ -34,26 +25,14 @@ return function(library, Window, Tab1)
         local char = player.Character or player.CharacterAdded:Wait()
         local root = char:WaitForChild("HumanoidRootPart")
         local humanoid = char:WaitForChild("Humanoid")
-
         local UIS = game:GetService("UserInputService")
         local RunService = game:GetService("RunService")
         local cam = workspace.CurrentCamera
         local speed = 60
 
-        local function saveDefaultAnims()
-            getgenv().DefaultAnims = {}
-            for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-                if track.Animation and track.Animation.AnimationId then
-                    getgenv().DefaultAnims[track.Animation.AnimationId] = track
-                end
-            end
-        end
-
         local function stopAllDefaultAnims()
             for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-                if track ~= getgenv().ZombieIdleTrack then
-                    track:Stop()
-                end
+                if track ~= getgenv().ZombieIdleTrack then track:Stop() end
             end
         end
 
@@ -62,7 +41,6 @@ return function(library, Window, Tab1)
             if getgenv().ZombieIdleTrack and getgenv().ZombieIdleTrack.IsPlaying then
                 getgenv().ZombieIdleTrack:Stop()
             end
-
             local anim = Instance.new("Animation")
             anim.AnimationId = ZOMBIE_IDLE_ANIM_ID
             getgenv().ZombieIdleTrack = humanoid:LoadAnimation(anim)
@@ -72,48 +50,31 @@ return function(library, Window, Tab1)
         end
 
         local function stopFlyMode()
-            if getgenv().ZombieIdleTrack then
-                getgenv().ZombieIdleTrack:Stop()
-                getgenv().ZombieIdleTrack = nil
-            end
-            if getgenv().FlyBV and getgenv().FlyBV.Parent then
-                getgenv().FlyBV:Destroy()
-                getgenv().FlyBV = nil
-            end
-            if getgenv().FlyRunService then
-                getgenv().FlyRunService:Disconnect()
-                getgenv().FlyRunService = nil
-            end
+            if getgenv().ZombieIdleTrack then getgenv().ZombieIdleTrack:Stop() getgenv().ZombieIdleTrack = nil end
+            if getgenv().FlyBV and getgenv().FlyBV.Parent then getgenv().FlyBV:Destroy() getgenv().FlyBV = nil end
+            if getgenv().FlyRunService then getgenv().FlyRunService:Disconnect() getgenv().FlyRunService = nil end
         end
 
         local function updateFly()
             if not getgenv().FlyActive or not getgenv().FlyBV then return end
-
             local move = Vector3.new(
                 (UIS:IsKeyDown(Enum.KeyCode.D) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.A) and 1 or 0),
                 (UIS:IsKeyDown(Enum.KeyCode.Space) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.LeftShift) and 1 or 0),
                 (UIS:IsKeyDown(Enum.KeyCode.S) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.W) and 1 or 0)
             )
-
             if move.Magnitude > 0 then move = move.Unit end
             getgenv().FlyBV.Velocity = cam.CFrame:VectorToWorldSpace(move) * speed
-
-            if getgenv().ZombieIdleTrack and not getgenv().ZombieIdleTrack.IsPlaying then
-                getgenv().ZombieIdleTrack:Play()
-            end
+            if getgenv().ZombieIdleTrack and not getgenv().ZombieIdleTrack.IsPlaying then getgenv().ZombieIdleTrack:Play() end
             stopAllDefaultAnims()
         end
 
         if state then
-            saveDefaultAnims()
             stopFlyMode()
-
             getgenv().FlyBV = Instance.new("BodyVelocity")
             getgenv().FlyBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
             getgenv().FlyBV.P = 3000
             getgenv().FlyBV.Velocity = Vector3.zero
             getgenv().FlyBV.Parent = root
-
             getgenv().FlyRunService = RunService.RenderStepped:Connect(updateFly)
             playZombieIdle()
         else
@@ -121,12 +82,9 @@ return function(library, Window, Tab1)
         end
     end
 
-    -- Persistência do Fly
     game.Players.LocalPlayer.CharacterAdded:Connect(function()
         task.wait(0.6)
-        if getgenv().FlyActive then
-            flyshu(true)
-        end
+        if getgenv().FlyActive then flyshu(true) end
     end)
 
     ------------------------------------------------------------------
@@ -149,18 +107,17 @@ return function(library, Window, Tab1)
             task.wait(0.5)
             if not char or not char:FindFirstChild("Right Leg") or not char:FindFirstChild("Head") then return end
 
-            -- KORBLOX RIGHT LEG
+            -- Korblox Right Leg
             local rightLeg = char["Right Leg"]
             local legMesh = rightLeg:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh", rightLeg)
             legMesh.MeshId = KORBLOX_LEG_MESH
             legMesh.TextureId = KORBLOX_LEG_TEXTURE
             legMesh.Scale = Vector3.new(1, 1, 1)
 
-            -- HEADLESS HEAD
+            -- Headless Head
             local head = char.Head
             local face = head:FindFirstChildOfClass("Decal")
             if face then face:Destroy() end
-
             local headMesh = head:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh", head)
             headMesh.MeshId = HEADLESS_MESH
             headMesh.TextureId = HEADLESS_TEXTURE
@@ -178,77 +135,40 @@ return function(library, Window, Tab1)
 
         local function remove()
             if not char then return end
-
             local rightLeg = char:FindFirstChild("Right Leg")
             if rightLeg then
                 local mesh = rightLeg:FindFirstChildOfClass("SpecialMesh")
-                if mesh then
-                    mesh.MeshId = ""
-                    mesh.TextureId = ""
-                end
+                if mesh then mesh.MeshId = "" mesh.TextureId = "" end
             end
-
             local head = char:FindFirstChild("Head")
             if head then
                 local mesh = head:FindFirstChildOfClass("SpecialMesh")
                 if mesh then mesh:Destroy() end
-
                 local desc = game.Players:GetHumanoidDescriptionFromUserId(player.UserId)
                 local face = head:FindFirstChildOfClass("Decal") or Instance.new("Decal", head)
                 face.Texture = desc.Face or "rbxasset://textures/face.png"
             end
-
             humanoid:ApplyDescription(humanoid:GetAppliedDescription())
         end
 
-        if state then
-            apply()
-        else
-            remove()
-        end
+        if state then apply() else remove() end
     end
 
-    -- Persistência do Korblox/Headless
     game.Players.LocalPlayer.CharacterAdded:Connect(function()
         task.wait(1)
-        if getgenv().KorbloxHeadlessActive then
-            applyKorbloxHeadless(true)
-        end
+        if getgenv().KorbloxHeadlessActive then applyKorbloxHeadless(true) end
     end)
 
     ------------------------------------------------------------------
-    -- UI - GERAL
+    -- UI (TOGGLE VISÍVEL: enabled = true, default = false)
     ------------------------------------------------------------------
-    Section1:AddToggle({
-        enabled = true,
-        text = "NoClip",
-        flag = "Atravessa as paredes.",
-        tooltip = "",
-        risky = true,
-        callback = function(lol) print("NoClip: "..tostring(lol)) end
-    })
-
-    Section1:AddToggle({
-        enabled = true,
-        text = "Fly",
-        flag = "Voe como zumbi (sem fall).",
-        tooltip = "",
-        risky = true,
-        callback = flyshu
-    })
-
-    Section1:AddToggle({
-        enabled = true,
-        text = "Fling",
-        flag = "Lança outros jogadores para longe.",
-        tooltip = "",
-        risky = true,
-        callback = function(lol) print("Fling: "..tostring(lol)) end
-    })
+    Section1:AddToggle({ enabled = true, text = "NoClip", flag = "Atravessa as paredes.", risky = true, callback = function(lol) print("NoClip: "..tostring(lol)) end })
+    Section1:AddToggle({ enabled = true, text = "Fly", flag = "Voe como zumbi (sem fall).", risky = true, callback = flyshu })
+    Section1:AddToggle({ enabled = true, text = "Fling", flag = "Lança outros jogadores.", risky = true, callback = function(lol) print("Fling: "..tostring(lol)) end })
 
     Section1:AddSeparator({ text = "Speed & Jump" })
-    Section1:AddSlider({ text = "Player Speed", flag = "Speed:", value = 16, min = 16, max = 99, callback = function(v) print("Velocidade: "..v) end })
-    Section1:AddSlider({ text = "Player Jump", flag = "Jump:", value = 50, min = 50, max = 200, callback = function(v) print("Pulo: "..v) end })
+    Section1:AddSlider({ text = "Player Speed", flag = "Speed:", value = 16, min = 16, max = 99, callback = function(v) print("Speed: "..v) end })
+    Section1:AddSlider({ text = "Player Jump", flag = "Jump:", value = 50, min = 50, max = 200, callback = function(v) print("Jump: "..v) end })
 
     Section1:AddSeparator({ text = "Outros" })
     Section1:AddToggle({ enabled = true, text = "Anti AFK", flag = "Anti AFK", risky = true, callback = function(lol) print("Anti AFK: "..tostring(lol)) end })
@@ -256,11 +176,9 @@ return function(library, Window, Tab1)
     Section1:AddToggle({ enabled = true, text = "Building Tools", flag = "Tools", risky = true, callback = function(lol) print("Tools: "..tostring(lol)) end })
     Section1:AddToggle({ enabled = true, text = "Ghost mode", flag = "Invisível", risky = true, callback = function(lol) print("Ghost: "..tostring(lol)) end })
 
-    ------------------------------------------------------------------
-    -- UI - EXPLOITS (SEM "Aparência")
-    ------------------------------------------------------------------
+    -- EXPLOITS
     Section2:AddToggle({ enabled = true, text = "Auto Pesca", flag = "Auto Pesca", risky = true, callback = function(lol) print("Auto Pesca: "..tostring(lol)) end })
-    Section2:AddSlider({ text = "Vel. Pesca", flag = "Vel", value = 10, min = 10, max = 50, callback = function(v) print("Vel. Pesca: "..v) end })
+    Section2:AddSlider({ text = "Vel. Pesca", flag = "Vel", value = 10, min = 10, max = 50, callback = function(v) print("Vel: "..v) end })
     Section2:AddToggle({ enabled = true, text = "Vender Peixes", flag = "Vender", risky = true, callback = function(lol) print("Vender: "..tostring(lol)) end })
     Section2:AddSlider({ text = "Tempo Vendas", flag = "Tempo", value = 5, min = 5, max = 30, callback = function(v) print("Tempo: "..v) end })
 
@@ -272,17 +190,13 @@ return function(library, Window, Tab1)
     Section2:AddToggle({ enabled = true, text = "ESP", flag = "ESP", risky = true, callback = function(lol) print("ESP: "..tostring(lol)) end })
     Section2:AddSlider({ text = "Render ESP", flag = "Render", value = 50, min = 50, max = 100, callback = function(v) print("Render: "..v) end })
     Section2:AddToggle({ enabled = true, text = "Espectar", flag = "Spectate", risky = true, callback = function(lol) print("Spectate: "..tostring(lol)) end })
-
-    Section2:AddList({
-        enabled = true, text = "Jogador", flag = "List", value = "Selecione", values = {"shu", "drugs", "licy"},
-        callback = function(v) print("Spectando: "..v) end
-    })
-
+    Section2:AddList({ enabled = true, text = "Jogador", flag = "List", value = "Selecione", values = {"shu", "drugs", "licy"}, callback = function(v) print("Spectando: "..v) end })
     Section2:AddToggle({ enabled = true, text = "Xray", flag = "Xray", risky = true, callback = function(lol) print("Xray: "..tostring(lol)) end })
 
-    -- KORBLOX + HEADLESS (DIRETO NA SEÇÃO VISUAL)
+    -- KORBLOX + HEADLESS (VISÍVEL E DESATIVADO POR PADRÃO)
     Section2:AddToggle({
-        enabled = false,
+        enabled = true,
+        default = false,
         text = "Korblox Leg + Headless",
         flag = "Perna direita do Korblox + sem cabeça.",
         tooltip = "Visual apenas. Persiste ao morrer.",
@@ -296,7 +210,7 @@ return function(library, Window, Tab1)
     Section2:AddSlider({ text = "Tamanho FOV", flag = "FOVSize", value = 50, min = 1, max = 100, callback = function(v) print("FOV: "..v) end })
 
     ------------------------------------------------------------------
-    -- ABRIR UI
+    -- ABRE A UI
     ------------------------------------------------------------------
     Window:SetOpen(true)
 end
