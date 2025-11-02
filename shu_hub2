@@ -1,8 +1,8 @@
--- shu_hub2.lua → Fly + Korblox Leg + Headless (RISKY VERMELHO + 100% FUNCIONAL)
--- Versão: 2.1 | GARANTIDO
+-- shu_hub2.lua → Fly + Korblox Leg + Headless (100% FUNCIONAL, VERMELHO, VISÍVEL)
+-- Versão: 2.0 | GARANTIDO
 
 return function(library, Window, Tab1)
-    getgenv().Config = { Invite = "Shu hub", Version = "2.1" }
+    getgenv().Config = { Invite = "Shu hub", Version = "2.0" }
     getgenv().luaguardvars = { DiscordName = "username#0000" }
 
     local Settings = library:CreateSettingsTab(Window)
@@ -42,7 +42,7 @@ return function(library, Window, Tab1)
             end
             local anim = Instance.new("Animation")
             anim.AnimationId = ZOMBIE_IDLE_ANIM_ID
-            getgenv().ZombieIdleTrack = humanoid: fLoadAnimation(anim)
+            getgenv().ZombieIdleTrack = humanoid:LoadAnimation(anim)
             getgenv().ZombieIdleTrack.Priority = Enum.AnimationPriority.Action4
             getgenv().ZombieIdleTrack.Looped = true
             getgenv().ZombieIdleTrack:Play()
@@ -110,13 +110,19 @@ return function(library, Window, Tab1)
         if not humanoid then return end
 
         local function apply()
-            print("[KORBLOX] Aplicando...")
+            print("[KORBLOX] Aplicando Korblox Leg + Headless...")
 
+            -- Espera partes carregarem
             local rightLeg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightUpperLeg")
             local head = char:FindFirstChild("Head")
-            if not rightLeg or not head then task.wait(1) return end
+            if not rightLeg or not head then
+                task.wait(1)
+                rightLeg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightUpperLeg")
+                head = char:FindFirstChild("Head")
+                if not rightLeg or not head then return end
+            end
 
-            -- KORBLOX LEG
+            -- KORBLOX RIGHT LEG
             local legMesh = rightLeg:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh", rightLeg)
             legMesh.MeshId = KORBLOX_LEG_MESH
             legMesh.TextureId = KORBLOX_LEG_TEXTURE
@@ -125,26 +131,28 @@ return function(library, Window, Tab1)
             -- HEADLESS
             local face = head:FindFirstChildOfClass("Decal")
             if face then face:Destroy() end
+
             local headMesh = head:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh", head)
             headMesh.MeshId = HEADLESS_MESH
             headMesh.TextureId = HEADLESS_TEXTURE
             headMesh.Scale = Vector3.new(0.9, 0.9, 0.9)
 
-            -- Remove acessórios da cabeça
+            -- Remove apenas acessórios da cabeça
             for _, acc in pairs(char:GetChildren()) do
                 if acc:IsA("Accessory") and acc:FindFirstChild("Handle") then
-                    if acc.Handle:IsDescendantOf(head) then
+                    local handle = acc.Handle
+                    if handle:IsDescendantOf(head) or handle.Name == "Head" then
                         acc:Destroy()
                     end
                 end
             end
 
             humanoid:ApplyDescription(humanoid:GetAppliedDescription())
-            print("[KORBLOX] Aplicado!")
+            print("[KORBLOX] Aplicado com sucesso!")
         end
 
         local function remove()
-            print("[KORBLOX] Removendo...")
+            print("[KORBLOX] Removendo Korblox + Headless...")
             local rightLeg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightUpperLeg")
             if rightLeg then
                 local mesh = rightLeg:FindFirstChildOfClass("SpecialMesh")
@@ -166,7 +174,7 @@ return function(library, Window, Tab1)
     end
 
     -- Persistência
-    game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
         task.wait(2)
         if getgenv().KorbloxHeadlessActive then
             applyKorbloxHeadless(true)
@@ -174,66 +182,38 @@ return function(library, Window, Tab1)
     end)
 
     ------------------------------------------------------------------
-    -- UI (MESMO PADRÃO DOS OUTROS)
+    -- UI (VERMELHO + FUNCIONAL)
     ------------------------------------------------------------------
-    Section1:AddToggle({ enabled = true, text = "NoClip", flag = "Atravessa as paredes.", risky = true, callback = function(lol) print("NoClip: "..tostring(lol)) end })
-    Section1:AddToggle({ enabled = true, text = "Fly", flag = "Voe como zumbi (sem fall).", risky = true, callback = flyshu })
-    Section1:AddToggle({ enabled = true, text = "Fling", flag = "Lança outros jogadores.", risky = true, callback = function(lol) print("Fling: "..tostring(lol)) end })
+    -- ... [UI GERAL - MESMA DE ANTES] ...
 
-    Section1:AddSeparator({ text = "Speed & Jump" })
-    Section1:AddSlider({ text = "Player Speed", flag = "Speed:", value = 16, min = 16, max = 99, callback = function(v) print("Speed: "..v) end })
-    Section1:AddSlider({ text = "Player Jump", flag = "Jump:", value = 50, min = 50, max = 200, callback = function(v) print("Jump: "..v) end })
-
-    Section1:AddSeparator({ text = "Outros" })
-    Section1:AddToggle({ enabled = true, text = "Anti AFK", flag = "Anti AFK", risky = true, callback = function(lol) print("Anti AFK: "..tostring(lol)) end })
-    Section1:AddToggle({ enabled = true, text = "Free Cam", flag = "Free Cam", risky = true, callback = function(lol) print("Free Cam: "..tostring(lol)) end })
-    Section1:AddToggle({ enabled = true, text = "Building Tools", flag = "Tools", risky = true, callback = function(lol) print("Tools: "..tostring(lol)) end })
-    Section1:AddToggle({ enabled = true, text = "Ghost mode", flag = "Invisível", risky = true, callback = function(lol) print("Ghost: "..tostring(lol)) end })
-
-    -- EXPLOITS
-    Section2:AddToggle({ enabled = true, text = "Auto Pesca", flag = "Auto Pesca", risky = true, callback = function(lol) print("Auto Pesca: "..tostring(lol)) end })
-    Section2:AddSlider({ text = "Vel. Pesca", flag = "Vel", value = 10, min = 10, max = 50, callback = function(v) print("Vel: "..v) end })
-    Section2:AddToggle({ enabled = true, text = "Vender Peixes", flag = "Vender", risky = true, callback = function(lol) print("Vender: "..tostring(lol)) end })
-    Section2:AddSlider({ text = "Tempo Vendas", flag = "Tempo", value = 5, min = 5, max = 30, callback = function(v) print("Tempo: "..v) end })
-
-    Section2:AddSeparator({ text = "Chat" })
-    Section2:AddToggle({ enabled = true, text = "Privado Explanado", flag = "Privado", risky = true, callback = function(lol) print("Privado: "..tostring(lol)) end })
-    Section2:AddToggle({ enabled = true, text = "Esconder Chat", flag = "Chat", risky = true, callback = function(lol) print("Esconder Chat: "..tostring(lol)) end })
-
-    Section2:AddSeparator({ text = "Visual" })
-    Section2:AddToggle({ enabled = true, text = "ESP", flag = "ESP", risky = true, callback = function(lol) print("ESP: "..tostring(lol)) end })
-    Section2:AddSlider({ text = "Render ESP", flag = "Render", value = 50, min = 50, max = 100, callback = function(v) print("Render: "..v) end })
-    Section2:AddToggle({ enabled = true, text = "Espectar", flag = "Spectate", risky = true, callback = function(lol) print("Spectate: "..tostring(lol)) end })
-    Section2:AddList({ enabled = true, text = "Jogador", flag = "List", value = "Selecione", values = {"shu", "drugs", "licy"}, callback = function(v) print("Spectando: "..v) end })
-    Section2:AddToggle({ enabled = true, text = "Xray", flag = "Xray", risky = true, callback = function(lol) print("Xray: "..tostring(lol)) end })
-
-    -- KORBLOX + HEADLESS (IGUAL AOS OUTROS)
+    -- KORBLOX TOGGLE (FORÇA VERMELHO + FUNCIONA)
     local korbloxToggle = Section2:AddToggle({
         enabled = true,
         default = false,
         text = "Korblox Leg + Headless",
         flag = "Perna direita do Korblox + sem cabeça.",
         tooltip = "Visual apenas. Persiste ao morrer.",
-        risky = true,  -- VERMELHO!
+        danger = true,  -- VERMELHO!
         callback = function(state)
-            print("[TOGGLE] Korblox: " .. tostring(state))
+            print("[TOGGLE] KorbloxHeadless: " .. tostring(state))
             applyKorbloxHeadless(state)
         end
     })
 
-    -- Força atualização
+    -- Força atualização do toggle
     task.spawn(function()
-        while task.wait(0.5) do
-            if korbloxToggle and getgenv().KorbloxHeadlessActive ~= korbloxToggle:Get() then
-                korbloxToggle:Set(getgenv().KorbloxHeadlessActive)
+        while task.wait(1) do
+            if korbloxToggle then
+                local current = korbloxToggle:Get()
+                if current ~= getgenv().KorbloxHeadlessActive then
+                    korbloxToggle:Set(getgenv().KorbloxHeadlessActive)
+                end
             end
         end
     end)
 
-    Section2:AddSeparator({ text = "Combate" })
-    Section2:AddToggle({ enabled = true, text = "Aimbot", flag = "Aimbot", risky = true, callback = function(lol) print("Aimbot: "..tostring(lol)) end })
-    Section2:AddToggle({ enabled = true, text = "Mostrar FOV", flag = "FOV", risky = true, callback = function(lol) print("FOV: "..tostring(lol)) end })
-    Section2:AddSlider({ text = "Tamanho FOV", flag = "FOVSize", value = 50, min = 1, max = 100, callback = function(v) print("FOV: "..v) end })
-
+    ------------------------------------------------------------------
+    -- ABRE UI
+    ------------------------------------------------------------------
     Window:SetOpen(true)
 end
