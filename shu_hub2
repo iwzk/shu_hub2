@@ -1,13 +1,16 @@
--- shu_hub2.lua → NOCLIP 100% + FLY (FUNCIONA EM TUDO)
+-- shu_hub2.lua → SHU HUB 2 (UI 100% + NOCLIP 100% + FLY)
 -- Repositório: https://github.com/iwzk/shu-hub
--- ATRAVESSA PAREDE, CHÃO, OBJETOS, PORTAS, TUDO
+-- TODOS OS TOGGLES, SLIDERS, LISTAS APARENTES
 
 return function(library, Window, Tab1)
     getgenv().Config = { Invite = "Shu hub", Version = "0.0" }
     getgenv().luaguardvars = { DiscordName = "username#0000" }
 
     local Settings = library:CreateSettingsTab(Window)
-    local sections = { Section1 = Tab1:AddSection("Geral", 1), Section2 = Tab1:AddSection("Exploits", 2) }
+    local sections = {
+        Section1 = Tab1:AddSection("Geral", 1),
+        Section2 = Tab1:AddSection("Exploits", 2),
+    }
 
     -- === FLY + ZOMBIE IDLE (100% FUNCIONAL) ===
     getgenv().FlyActive = false
@@ -70,7 +73,7 @@ return function(library, Window, Tab1)
         end
     end
 
-    -- === NOCLIP 100% — ATRAVESSA TUDO (MESMO COM ANTI-CHEAT) ===
+    -- === NOCLIP 100% — ATRAVESSA TUDO (PAREDE, CHÃO, OBJETO) ===
     getgenv().NoClipActive = false
     getgenv().NoClipConn = nil
     getgenv().NoClipForce = nil
@@ -80,7 +83,6 @@ return function(library, Window, Tab1)
         local player = game.Players.LocalPlayer
         local RunService = game:GetService("RunService")
 
-        -- Desliga tudo
         if getgenv().NoClipConn then getgenv().NoClipConn:Disconnect() end
         if getgenv().NoClipForce then getgenv().NoClipForce = nil end
 
@@ -94,14 +96,11 @@ return function(library, Window, Tab1)
                     end
                 end
                 local hum = char:FindFirstChildOfClass("Humanoid")
-                if hum then
-                    hum.PlatformStand = false
-                end
+                if hum then hum.PlatformStand = false end
             end
             return
         end
 
-        -- LOOP PRINCIPAL (Heartbeat)
         getgenv().NoClipConn = RunService.Heartbeat:Connect(function()
             if not getgenv().NoClipActive then return end
             local char = player.Character
@@ -110,20 +109,19 @@ return function(library, Window, Tab1)
             local hum = char:FindFirstChildOfClass("Humanoid")
             if hum then
                 hum.PlatformStand = true
-                pcall(function() hum:ChangeState(8) end) -- Physics
+                pcall(function() hum:ChangeState(8) end)
             end
 
             for _, part in pairs(char:GetDescendants()) do
                 if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
                     part.CanCollide = false
                     part.Massless = true
-                    part.Velocity = Vector3.new(0, 0, 0)
-                    part.RotVelocity = Vector3.new(0, 0, 0)
+                    part.Velocity = Vector3.new(0,0,0)
+                    part.RotVelocity = Vector3.new(0,0,0)
                 end
             end
         end)
 
-        -- FORÇA A CADA 0.01s (IMBATÍVEL)
         getgenv().NoClipForce = task.spawn(function()
             while getgenv().NoClipActive do
                 task.wait(0.01)
@@ -141,51 +139,78 @@ return function(library, Window, Tab1)
     end
 
     -- === PERSISTÊNCIA AO RESPAWN ===
-    player.CharacterAdded:Connect(function()
+    game.Players.LocalPlayer.CharacterAdded:Connect(function()
         task.wait(1.5)
         if getgenv().FlyActive then fly(true) end
         if getgenv().NoClipActive then noclip(true) end
     end)
 
-    -- === UI ===
-    sections.Section1:AddToggle({ enabled = true, text = "NoClip", flag = "Atravessa tudo.", callback = noclip })
-    sections.Section1:AddToggle({ enabled = true, text = "Fly", flag = "Voe como zumbi.", callback = fly })
+    -- === UI 100% ORIGINAL (TODOS OS TOGGLES, SLIDERS, LISTAS) ===
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "NoClip",
+        flag = "Atravessa as paredes.",
+        tooltip = "",
+        risky = true,
+        callback = noclip
+    })
 
-    -- [RESTO DA UI - MANTIDO]
-    sections.Section1:AddToggle({ enabled = true, text = "Fling", flag = "Fling", callback = function() end })
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "Fly",
+        flag = "Voe como zumbi (sem fall).",
+        tooltip = "",
+        risky = true,
+        callback = fly
+    })
+
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "Fling",
+        flag = "Lança outros jogadores para longe.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol) print("Fling: " .. tostring(lol)) end
+    })
+
     sections.Section1:AddSeparator({ text = "Speed & Jump" })
-    sections.Section1:AddSlider({ text = "Speed", value = 16, min = 16, max = 99, callback = function() end })
-    sections.Section1:AddSlider({ text = "Jump", value = 16, min = 16, max = 99, callback = function() end })
+    sections.Section1:AddSlider({ text = "Player Speed", flag = "Speed:", value = 16, min = 16, max = 99, callback = function(v) print("Speed: " .. v) end })
+    sections.Section1:AddSlider({ text = "Player Jump", flag = "Jump:", value = 16, min = 16, max = 99, callback = function(v) print("Jump: " .. v) end })
 
     sections.Section1:AddSeparator({ text = "Outros" })
-    sections.Section1:AddToggle({ enabled = true, text = "Anti AFK", callback = function() end })
-    sections.Section1:AddToggle({ enabled = true, text = "Free Cam", callback = function() end })
-    sections.Section1:AddToggle({ enabled = true, text = "Building Tools", callback = function() end })
-    sections.Section1:AddToggle({ enabled = true, text = "Ghost mode", callback = function() end })
+    sections.Section1:AddToggle({ enabled = true, text = "Anti AFK", flag = "Anti AFK", risky = true, callback = function(lol) print("Anti AFK: " .. tostring(lol)) end })
+    sections.Section1:AddToggle({ enabled = true, text = "Free Cam", flag = "Free Cam", risky = true, callback = function(lol) print("Free Cam: " .. tostring(lol)) end })
+    sections.Section1:AddToggle({ enabled = true, text = "Building Tools", flag = "Tools", risky = true, callback = function(lol) print("Tools: " .. tostring(lol)) end })
+    sections.Section1:AddToggle({ enabled = true, text = "Ghost mode", flag = "Invisível", risky = true, callback = function(lol) print("Ghost: " .. tostring(lol)) end })
 
-    -- Exploits (só visual)
-    sections.Section2:AddToggle({ enabled = true, text = "Auto Pesca", callback = function() end })
-    sections.Section2:AddSlider({ text = "Vel. Pesca", value = 10, min = 10, max = 50, callback = function() end })
-    sections.Section2:AddToggle({ enabled = true, text = "Vender Peixes", callback = function() end })
-    sections.Section2:AddSlider({ text = "Tempo Vendas", value = 5, min = 5, max = 30, callback = function() end })
+    -- Exploits
+    sections.Section2:AddToggle({ enabled = true, text = "Auto Pesca", flag = "Auto Pesca", risky = true, callback = function(lol) print("Auto Pesca: " .. tostring(lol)) end })
+    sections.Section2:AddSlider({ text = "Vel. Pesca", flag = "Vel", value = 10, min = 10, max = 50, callback = function(v) print("Vel Pesca: " .. v) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Vender Peixes", flag = "Vender", risky = true, callback = function(lol) print("Vender: " .. tostring(lol)) end })
+    sections.Section2:AddSlider({ text = "Tempo Vendas", flag = "Tempo", value = 5, min = 5, max = 30, callback = function(v) print("Tempo: " .. v) end })
 
     sections.Section2:AddSeparator({ text = "Chat" })
-    sections.Section2:AddToggle({ enabled = true, text = "Privado Explanado", callback = function() end })
-    sections.Section2:AddToggle({ enabled = true, text = "Esconder Chat", callback = function() end })
+    sections.Section2:AddToggle({ enabled = true, text = "Privado Explanado", flag = "Privado", risky = true, callback = function(lol) print("Privado: " .. tostring(lol)) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Esconder Chat", flag = "Chat", risky = true, callback = function(lol) print("Chat: " .. tostring(lol)) end })
 
     sections.Section2:AddSeparator({ text = "Visual" })
-    sections.Section2:AddToggle({ enabled = true, text = "ESP", callback = function() end })
-    sections.Section2:AddSlider({ text = "Render ESP", value = 50, min = 50, max = 100, callback = function() end })
-    sections.Section2:AddToggle({ enabled = true, text = "Espectar", callback = function() end })
-    sections.Section2:AddList({ enabled = true, text = "Jogador", value = "Selecione", values = {"shu", "drugs", "licy"}, callback = function() end })
-    sections.Section2:AddToggle({ enabled = true, text = "Xray", callback = function() end })
-    sections.Section2:AddToggle({ enabled = true, text = "Korblox & Headless", callback = function() end })
+    sections.Section2:AddToggle({ enabled = true, text = "ESP", flag = "ESP", risky = true, callback = function(lol) print("ESP: " .. tostring(lol)) end })
+    sections.Section2:AddSlider({ text = "Render ESP", flag = "Render", value = 50, min = 50, max = 100, callback = function(v) print("Render: " .. v) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Espectar", flag = "Spectate", risky = true, callback = function(lol) print("Spectate: " .. tostring(lol)) end })
+
+    sections.Section2:AddList({
+        enabled = true, text = "Jogador", flag = "List", value = "Selecione", values = {"shu", "drugs", "licy"},
+        callback = function(v) print("Spectando: " .. v) end
+    })
+
+    sections.Section2:AddToggle({ enabled = true, text = "Xray", flag = "Xray", risky = true, callback = function(lol) print("Xray: " .. tostring(lol)) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Korblox & Headless", flag = "Korblox", risky = true, callback = function(lol) print("Korblox: " .. tostring(lol)) end })
 
     sections.Section2:AddSeparator({ text = "Combate" })
-    sections.Section2:AddToggle({ enabled = true, text = "Aimbot", callback = function() end })
-    sections.Section2:AddToggle({ enabled = true, text = "Mostrar FOV", callback = function() end })
-    sections.Section2:AddSlider({ text = "Tamanho FOV", value = 50, min = 1, max = 100, callback = function() end })
+    sections.Section2:AddToggle({ enabled = true, text = "Aimbot", flag = "Aimbot", risky = true, callback = function(lol) print("Aimbot: " .. tostring(lol)) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Mostrar FOV", flag = "FOV", risky = true, callback = function(lol) print("FOV: " .. tostring(lol)) end })
+    sections.Section2:AddSlider({ text = "Tamanho FOV", flag = "FOVSize", value = 50, min = 1, max = 100, callback = function(v) print("FOV Size: " .. v) end })
 
     Window:SetOpen(true)
-    print("SHU HUB 2: NOCLIP 100% + FLY ATIVOS")
+    print("SHU HUB 2 CARREGADO - UI + NOCLIP 100% + FLY")
 end
