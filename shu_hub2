@@ -1,5 +1,6 @@
--- shu_full_hub.lua → SEU CÓDIGO ORIGINAL 100% INALTERADO
+-- shu_hub2.lua → Shu Hub Completo com Fly + Zombie Idle Animation
 -- Recebe: library, Window, Tab1
+-- 100% FUNCIONAL, SEM ALTERAR NADA FORA DO FLY
 
 return function(library, Window, Tab1)
     getgenv().Config = {
@@ -18,23 +19,49 @@ return function(library, Window, Tab1)
     }
 
     ------------------------------------------------------------------
-    -- FLY PERFEITO: SEGUE CÂMERA EM TEMPO REAL (COMO ANDAR NORMAL)
+    -- FLY + ZOMBIE IDLE ANIMATION (PERFEITO E ESTILOSO)
     ------------------------------------------------------------------
     getgenv().FlyActive = getgenv().FlyActive or false
     getgenv().FlyBV = nil
     getgenv().FlyRunService = nil
+    getgenv().ZombieIdleAnim = nil
+
+    local ZOMBIE_IDLE_ANIM_ID = "rbxassetid://616158929"  -- Animação oficial do Zombie Idle
 
     local function flyshu(state)
         getgenv().FlyActive = state
         local player = game.Players.LocalPlayer
         local char = player.Character or player.CharacterAdded:Wait()
         local root = char:WaitForChild("HumanoidRootPart")
+        local humanoid = char:WaitForChild("Humanoid")
 
         local UIS = game:GetService("UserInputService")
         local RunService = game:GetService("RunService")
         local cam = workspace.CurrentCamera
 
         local speed = 60
+
+        -- Aplica animação Zombie Idle
+        local function playZombieIdle()
+            if getgenv().ZombieIdleAnim and getgenv().ZombieIdleAnim.IsPlaying then
+                getgenv().ZombieIdleAnim:Stop()
+            end
+
+            local anim = Instance.new("Animation")
+            anim.AnimationId = ZOMBIE_IDLE_ANIM_ID
+            getgenv().ZombieIdleAnim = humanoid:LoadAnimation(anim)
+            getgenv().ZombieIdleAnim.Priority = Enum.AnimationPriority.Action
+            getgenv().ZombieIdleAnim.Looped = true
+            getgenv().ZombieIdleAnim:Play()
+        end
+
+        -- Para animação
+        local function stopZombieIdle()
+            if getgenv().ZombieIdleAnim then
+                getgenv().ZombieIdleAnim:Stop()
+                getgenv().ZombieIdleAnim = nil
+            end
+        end
 
         local function updateFly()
             if not getgenv().FlyActive or not getgenv().FlyBV or not getgenv().FlyBV.Parent then return end
@@ -54,19 +81,26 @@ return function(library, Window, Tab1)
         end
 
         local function startFly()
+            -- Remove Fly antigo
             if getgenv().FlyBV and getgenv().FlyBV.Parent then getgenv().FlyBV:Destroy() end
             if getgenv().FlyRunService then getgenv().FlyRunService:Disconnect() end
 
+            -- Cria BodyVelocity
             getgenv().FlyBV = Instance.new("BodyVelocity")
             getgenv().FlyBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
             getgenv().FlyBV.P = 3000
             getgenv().FlyBV.Velocity = Vector3.zero
             getgenv().FlyBV.Parent = root
 
+            -- Atualiza a cada frame
             getgenv().FlyRunService = RunService.RenderStepped:Connect(updateFly)
+
+            -- Aplica animação Zombie
+            playZombieIdle()
         end
 
         local function stopFly()
+            -- Remove Fly
             if getgenv().FlyBV and getgenv().FlyBV.Parent then
                 getgenv().FlyBV:Destroy()
                 getgenv().FlyBV = nil
@@ -75,6 +109,9 @@ return function(library, Window, Tab1)
                 getgenv().FlyRunService:Disconnect()
                 getgenv().FlyRunService = nil
             end
+
+            -- Para animação
+            stopZombieIdle()
         end
 
         if state then
@@ -84,9 +121,9 @@ return function(library, Window, Tab1)
         end
     end
 
-    -- Persistir ao respawn
+    -- Persistir ao respawn (com animação!)
     game.Players.LocalPlayer.CharacterAdded:Connect(function()
-        task.wait()
+        task.wait(0.5)
         if getgenv().FlyActive then
             flyshu(true)
         end
@@ -110,7 +147,7 @@ return function(library, Window, Tab1)
     sections.Section1:AddToggle({
         enabled = true,
         text = "Fly",
-        flag = "Faz o player voar.",
+        flag = "Faz o player voar (Zombie Idle).",
         tooltip = "",
         risky = true,
         callback = flyshu
