@@ -25,7 +25,6 @@ return function(library, Window, Tab1)
     getgenv().FlyBV = nil
     getgenv().FlyRunService = nil
     getgenv().ZombieIdleTrack = nil
-    getgenv().DefaultAnims = {}
 
     local ZOMBIE_IDLE_ANIM_ID = "rbxassetid://616158929"
 
@@ -40,15 +39,6 @@ return function(library, Window, Tab1)
         local RunService = game:GetService("RunService")
         local cam = workspace.CurrentCamera
         local speed = 60
-
-        local function saveDefaultAnims()
-            getgenv().DefaultAnims = {}
-            for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-                if track.Animation and track.Animation.AnimationId then
-                    getgenv().DefaultAnims[track.Animation.AnimationId] = track
-                end
-            end
-        end
 
         local function stopAllDefaultAnims()
             for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
@@ -102,7 +92,6 @@ return function(library, Window, Tab1)
         end
 
         if state then
-            saveDefaultAnims()
             stopFlyMode()
             getgenv().FlyBV = Instance.new("BodyVelocity")
             getgenv().FlyBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
@@ -117,7 +106,7 @@ return function(library, Window, Tab1)
     end
 
     ------------------------------------------------------------------
-    -- NOCLIP 100% FUNCIONAL — ATRAVESSA TUDO (PAREDES, CHÃO, OBJETOS)
+    -- NOCLIP 100% — ATRAVESSA TUDO (PAREDE, CHÃO, OBJETOS)
     ------------------------------------------------------------------
     getgenv().NoClipActive = getgenv().NoClipActive or false
     getgenv().NoClipLoop = nil
@@ -138,40 +127,53 @@ return function(library, Window, Tab1)
                 for _, part in pairs(char:GetDescendants()) do
                     if part:IsA("BasePart") then
                         part.CanCollide = true
+                        part.Massless = false
                     end
+                end
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum.PlatformStand = false
+                    hum:ChangeState(Enum.HumanoidStateType.Running)
                 end
             end
             return
         end
 
-        -- Loop principal (Stepped)
-        getgenv().NoClipLoop = RunService.Stepped:Connect(function()
+        -- LOOP PRINCIPAL (Heartbeat — mais rápido que Stepped)
+        getgenv().NoClipLoop = RunService.Heartbeat:Connect(function()
             if not getgenv().NoClipActive then return end
             local char = player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.PlatformStand = true
+                hum:ChangeState(Enum.HumanoidStateType.Physics)
+            end
+
             for _, part in pairs(char:GetDescendants()) do
                 if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
                     part.CanCollide = false
+                    part.Massless = true
                 end
-            end
-
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum:ChangeState(Enum.HumanoidStateType.Physics)
             end
         end)
 
-        -- Reforço a cada 0.05s (garante que NADA reative colisão)
+        -- REFORTA A CADA 0.03s (IMPEDE QUALQUER REATIVAÇÃO)
         getgenv().NoClipTask = task.spawn(function()
             while getgenv().NoClipActive do
-                task.wait(0.05)
+                task.wait(0.03)
                 local char = player.Character
                 if char then
                     for _, part in pairs(char:GetDescendants()) do
                         if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
                             part.CanCollide = false
+                            part.Massless = true
                         end
+                    end
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        hum.PlatformStand = true
                     end
                 end
             end
@@ -182,7 +184,7 @@ return function(library, Window, Tab1)
     -- PERSISTÊNCIA AO RESPAWN (FLY + NOCLIP)
     ------------------------------------------------------------------
     game.Players.LocalPlayer.CharacterAdded:Connect(function()
-        task.wait(1.2)
+        task.wait(1.5)
         if getgenv().FlyActive then
             flyshu(true)
         end
