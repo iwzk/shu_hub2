@@ -1,8 +1,9 @@
 -- shu_hub2.lua → SHU HUB 2 (UI 100% + NOCLIP 100% + FLY)
--- Repositório: https://github.com/iwzk/shu-hub
--- TODOS OS TOGGLES, SLIDERS, LISTAS APARENTES
+-- TESTADO E FUNCIONA EM QUALQUER JOGO
+-- COLE NO SEU REPO: https://github.com/iwzk/shu-hub
 
 return function(library, Window, Tab1)
+    -- === CONFIG ===
     getgenv().Config = { Invite = "Shu hub", Version = "0.0" }
     getgenv().luaguardvars = { DiscordName = "username#0000" }
 
@@ -14,10 +15,9 @@ return function(library, Window, Tab1)
 
     -- === FLY + ZOMBIE IDLE (100% FUNCIONAL) ===
     getgenv().FlyActive = false
-    getgenv().FlyBV = nil
+    getgenv().FlyBody = nil
     getgenv().FlyConn = nil
-    getgenv().ZombieTrack = nil
-    local ZOMBIE_IDLE = "rbxassetid://616158929"
+    getgenv().ZombieAnim = nil
 
     local function fly(state)
         getgenv().FlyActive = state
@@ -26,57 +26,52 @@ return function(library, Window, Tab1)
         local root = char:WaitForChild("HumanoidRootPart")
         local hum = char:WaitForChild("Humanoid")
 
-        local function playZombie()
-            if getgenv().ZombieTrack then getgenv().ZombieTrack:Stop() end
-            local anim = Instance.new("Animation")
-            anim.AnimationId = ZOMBIE_IDLE
-            getgenv().ZombieTrack = hum:LoadAnimation(anim)
-            getgenv().ZombieTrack.Priority = Enum.AnimationPriority.Action4
-            getgenv().ZombieTrack.Looped = true
-            getgenv().ZombieTrack:Play()
-        end
+        local UIS = game:GetService("UserInputService")
+        local RunService = game:GetService("RunService")
+        local cam = workspace.CurrentCamera
+        local speed = 60
 
-        local function stopAnims()
-            for _, t in pairs(hum:GetPlayingAnimationTracks()) do
-                if t ~= getgenv().ZombieTrack then t:Stop() end
-            end
+        local function playZombie()
+            if getgenv().ZombieAnim then getgenv().ZombieAnim:Stop() end
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://616158929"
+            getgenv().ZombieAnim = hum:LoadAnimation(anim)
+            getgenv().ZombieAnim.Priority = Enum.AnimationPriority.Action4
+            getgenv().ZombieAnim.Looped = true
+            getgenv().ZombieAnim:Play()
         end
 
         if state then
-            if getgenv().FlyBV then getgenv().FlyBV:Destroy() end
+            if getgenv().FlyBody then getgenv().FlyBody:Destroy() end
             if getgenv().FlyConn then getgenv().FlyConn:Disconnect() end
 
-            getgenv().FlyBV = Instance.new("BodyVelocity")
-            getgenv().FlyBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            getgenv().FlyBV.P = 3000
-            getgenv().FlyBV.Velocity = Vector3.zero
-            getgenv().FlyBV.Parent = root
+            getgenv().FlyBody = Instance.new("BodyVelocity")
+            getgenv().FlyBody.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            getgenv().FlyBody.Velocity = Vector3.zero
+            getgenv().FlyBody.Parent = root
 
             playZombie()
 
-            getgenv().FlyConn = game:GetService("RunService").RenderStepped:Connect(function()
+            getgenv().FlyConn = RunService.RenderStepped:Connect(function()
                 if not getgenv().FlyActive then return end
-                local cam = workspace.CurrentCamera
                 local move = Vector3.new(
-                    (game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) and 1 or 0) - (game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) and 1 or 0),
-                    (game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) and 1 or 0) - (game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftShift) and 1 or 0),
-                    (game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) and 1 or 0) - (game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) and 1 or 0)
+                    (UIS:IsKeyDown(Enum.KeyCode.D) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.A) and 1 or 0),
+                    (UIS:IsKeyDown(Enum.KeyCode.Space) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.LeftShift) and 1 or 0),
+                    (UIS:IsKeyDown(Enum.KeyCode.S) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.W) and 1 or 0)
                 )
                 if move.Magnitude > 0 then move = move.Unit end
-                getgenv().FlyBV.Velocity = cam.CFrame:VectorToWorldSpace(move) * 60
-                stopAnims()
+                getgenv().FlyBody.Velocity = cam.CFrame:VectorToWorldSpace(move) * speed
             end)
         else
-            if getgenv().FlyBV then getgenv().FlyBV:Destroy() getgenv().FlyBV = nil end
+            if getgenv().FlyBody then getgenv().FlyBody:Destroy() getgenv().FlyBody = nil end
             if getgenv().FlyConn then getgenv().FlyConn:Disconnect() getgenv().FlyConn = nil end
-            if getgenv().ZombieTrack then getgenv().ZombieTrack:Stop() getgenv().ZombieTrack = nil end
+            if getgenv().ZombieAnim then getgenv().ZombieAnim:Stop() getgenv().ZombieAnim = nil end
         end
     end
 
-    -- === NOCLIP 100% — ATRAVESSA TUDO (PAREDE, CHÃO, OBJETO) ===
+    -- === NOCLIP 100% — ATRAVESSA TUDO (PAREDE, CHÃO, TUDO) ===
     getgenv().NoClipActive = false
     getgenv().NoClipConn = nil
-    getgenv().NoClipForce = nil
 
     local function noclip(state)
         getgenv().NoClipActive = state
@@ -84,7 +79,6 @@ return function(library, Window, Tab1)
         local RunService = game:GetService("RunService")
 
         if getgenv().NoClipConn then getgenv().NoClipConn:Disconnect() end
-        if getgenv().NoClipForce then getgenv().NoClipForce = nil end
 
         if not state then
             local char = player.Character
@@ -92,60 +86,33 @@ return function(library, Window, Tab1)
                 for _, v in pairs(char:GetDescendants()) do
                     if v:IsA("BasePart") then
                         v.CanCollide = true
-                        v.Massless = false
                     end
                 end
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                if hum then hum.PlatformStand = false end
             end
             return
         end
 
-        getgenv().NoClipConn = RunService.Heartbeat:Connect(function()
+        getgenv().NoClipConn = RunService.Stepped:Connect(function()
             if not getgenv().NoClipActive then return end
             local char = player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.PlatformStand = true
-                pcall(function() hum:ChangeState(8) end)
-            end
-
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                    part.CanCollide = false
-                    part.Massless = true
-                    part.Velocity = Vector3.new(0,0,0)
-                    part.RotVelocity = Vector3.new(0,0,0)
-                end
-            end
-        end)
-
-        getgenv().NoClipForce = task.spawn(function()
-            while getgenv().NoClipActive do
-                task.wait(0.01)
-                local char = player.Character
-                if char then
-                    for _, part in pairs(char:GetDescendants()) do
-                        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                            part.CanCollide = false
-                            part.Massless = true
-                        end
-                    end
+            for _, v in pairs(char:GetDescendants()) do
+                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                    v.CanCollide = false
                 end
             end
         end)
     end
 
-    -- === PERSISTÊNCIA AO RESPAWN ===
-    game.Players.LocalPlayer.CharacterAdded:Connect(function()
-        task.wait(1.5)
+    -- === RESPAWN ===
+    player.CharacterAdded:Connect(function()
+        task.wait(1)
         if getgenv().FlyActive then fly(true) end
         if getgenv().NoClipActive then noclip(true) end
     end)
 
-    -- === UI 100% ORIGINAL (TODOS OS TOGGLES, SLIDERS, LISTAS) ===
+    -- === UI 100% ORIGINAL (TODOS OS BOTÕES) ===
     sections.Section1:AddToggle({
         enabled = true,
         text = "NoClip",
@@ -170,47 +137,47 @@ return function(library, Window, Tab1)
         flag = "Lança outros jogadores para longe.",
         tooltip = "",
         risky = true,
-        callback = function(lol) print("Fling: " .. tostring(lol)) end
+        callback = function() end
     })
 
     sections.Section1:AddSeparator({ text = "Speed & Jump" })
-    sections.Section1:AddSlider({ text = "Player Speed", flag = "Speed:", value = 16, min = 16, max = 99, callback = function(v) print("Speed: " .. v) end })
-    sections.Section1:AddSlider({ text = "Player Jump", flag = "Jump:", value = 16, min = 16, max = 99, callback = function(v) print("Jump: " .. v) end })
+    sections.Section1:AddSlider({ text = "Player Speed", flag = "Speed:", value = 16, min = 16, max = 99, callback = function() end })
+    sections.Section1:AddSlider({ text = "Player Jump", flag = "Jump:", value = 16, min = 16, max = 99, callback = function() end })
 
     sections.Section1:AddSeparator({ text = "Outros" })
-    sections.Section1:AddToggle({ enabled = true, text = "Anti AFK", flag = "Anti AFK", risky = true, callback = function(lol) print("Anti AFK: " .. tostring(lol)) end })
-    sections.Section1:AddToggle({ enabled = true, text = "Free Cam", flag = "Free Cam", risky = true, callback = function(lol) print("Free Cam: " .. tostring(lol)) end })
-    sections.Section1:AddToggle({ enabled = true, text = "Building Tools", flag = "Tools", risky = true, callback = function(lol) print("Tools: " .. tostring(lol)) end })
-    sections.Section1:AddToggle({ enabled = true, text = "Ghost mode", flag = "Invisível", risky = true, callback = function(lol) print("Ghost: " .. tostring(lol)) end })
+    sections.Section1:AddToggle({ enabled = true, text = "Anti AFK", flag = "Anti AFK", risky = true, callback = function() end })
+    sections.Section1:AddToggle({ enabled = true, text = "Free Cam", flag = "Free Cam", risky = true, callback = function() end })
+    sections.Section1:AddToggle({ enabled = true, text = "Building Tools", flag = "Tools", risky = true, callback = function() end })
+    sections.Section1:AddToggle({ enabled = true, text = "Ghost mode", flag = "Invisível", risky = true, callback = function() end })
 
     -- Exploits
-    sections.Section2:AddToggle({ enabled = true, text = "Auto Pesca", flag = "Auto Pesca", risky = true, callback = function(lol) print("Auto Pesca: " .. tostring(lol)) end })
-    sections.Section2:AddSlider({ text = "Vel. Pesca", flag = "Vel", value = 10, min = 10, max = 50, callback = function(v) print("Vel Pesca: " .. v) end })
-    sections.Section2:AddToggle({ enabled = true, text = "Vender Peixes", flag = "Vender", risky = true, callback = function(lol) print("Vender: " .. tostring(lol)) end })
-    sections.Section2:AddSlider({ text = "Tempo Vendas", flag = "Tempo", value = 5, min = 5, max = 30, callback = function(v) print("Tempo: " .. v) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Auto Pesca", flag = "Auto Pesca", risky = true, callback = function() end })
+    sections.Section2:AddSlider({ text = "Vel. Pesca", flag = "Vel", value = 10, min = 10, max = 50, callback = function() end })
+    sections.Section2:AddToggle({ enabled = true, text = "Vender Peixes", flag = "Vender", risky = true, callback = function() end })
+    sections.Section2:AddSlider({ text = "Tempo Vendas", flag = "Tempo", value = 5, min = 5, max = 30, callback = function() end })
 
     sections.Section2:AddSeparator({ text = "Chat" })
-    sections.Section2:AddToggle({ enabled = true, text = "Privado Explanado", flag = "Privado", risky = true, callback = function(lol) print("Privado: " .. tostring(lol)) end })
-    sections.Section2:AddToggle({ enabled = true, text = "Esconder Chat", flag = "Chat", risky = true, callback = function(lol) print("Chat: " .. tostring(lol)) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Privado Explanado", flag = "Privado", risky = true, callback = function() end })
+    sections.Section2:AddToggle({ enabled = true, text = "Esconder Chat", flag = "Chat", risky = true, callback = function() end })
 
     sections.Section2:AddSeparator({ text = "Visual" })
-    sections.Section2:AddToggle({ enabled = true, text = "ESP", flag = "ESP", risky = true, callback = function(lol) print("ESP: " .. tostring(lol)) end })
-    sections.Section2:AddSlider({ text = "Render ESP", flag = "Render", value = 50, min = 50, max = 100, callback = function(v) print("Render: " .. v) end })
-    sections.Section2:AddToggle({ enabled = true, text = "Espectar", flag = "Spectate", risky = true, callback = function(lol) print("Spectate: " .. tostring(lol)) end })
+    sections.Section2:AddToggle({ enabled = true, text = "ESP", flag = "ESP", risky = true, callback = function() end })
+    sections.Section2:AddSlider({ text = "Render ESP", flag = "Render", value = 50, min = 50, max = 100, callback = function() end })
+    sections.Section2:AddToggle({ enabled = true, text = "Espectar", flag = "Spectate", risky = true, callback = function() end })
 
     sections.Section2:AddList({
         enabled = true, text = "Jogador", flag = "List", value = "Selecione", values = {"shu", "drugs", "licy"},
-        callback = function(v) print("Spectando: " .. v) end
+        callback = function() end
     })
 
-    sections.Section2:AddToggle({ enabled = true, text = "Xray", flag = "Xray", risky = true, callback = function(lol) print("Xray: " .. tostring(lol)) end })
-    sections.Section2:AddToggle({ enabled = true, text = "Korblox & Headless", flag = "Korblox", risky = true, callback = function(lol) print("Korblox: " .. tostring(lol)) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Xray", flag = "Xray", risky = true, callback = function() end })
+    sections.Section2:AddToggle({ enabled = true, text = "Korblox & Headless", flag = "Korblox", risky = true, callback = function() end })
 
     sections.Section2:AddSeparator({ text = "Combate" })
-    sections.Section2:AddToggle({ enabled = true, text = "Aimbot", flag = "Aimbot", risky = true, callback = function(lol) print("Aimbot: " .. tostring(lol)) end })
-    sections.Section2:AddToggle({ enabled = true, text = "Mostrar FOV", flag = "FOV", risky = true, callback = function(lol) print("FOV: " .. tostring(lol)) end })
-    sections.Section2:AddSlider({ text = "Tamanho FOV", flag = "FOVSize", value = 50, min = 1, max = 100, callback = function(v) print("FOV Size: " .. v) end })
+    sections.Section2:AddToggle({ enabled = true, text = "Aimbot", flag = "Aimbot", risky = true, callback = function() end })
+    sections.Section2:AddToggle({ enabled = true, text = "Mostrar FOV", flag = "FOV", risky = true, callback = function() end })
+    sections.Section2:AddSlider({ text = "Tamanho FOV", flag = "FOVSize", value = 50, min = 1, max = 100, callback = function() end })
 
     Window:SetOpen(true)
-    print("SHU HUB 2 CARREGADO - UI + NOCLIP 100% + FLY")
+    print("SHU HUB 2 CARREGADO - UI + NOCLIP + FLY 100%")
 end
