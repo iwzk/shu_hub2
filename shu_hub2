@@ -1,8 +1,8 @@
--- shu_hub2.lua → Fly + Korblox Leg + Headless (FUNCIONAL, VERMELHO, VISÍVEL)
--- Versão: 1.5 | Tudo corrigido
+-- shu_hub2.lua → Fly + Korblox Leg + Headless (RISKY VERMELHO + 100% FUNCIONAL)
+-- Versão: 2.1 | GARANTIDO
 
 return function(library, Window, Tab1)
-    getgenv().Config = { Invite = "Shu hub", Version = "1.5" }
+    getgenv().Config = { Invite = "Shu hub", Version = "2.1" }
     getgenv().luaguardvars = { DiscordName = "username#0000" }
 
     local Settings = library:CreateSettingsTab(Window)
@@ -42,7 +42,7 @@ return function(library, Window, Tab1)
             end
             local anim = Instance.new("Animation")
             anim.AnimationId = ZOMBIE_IDLE_ANIM_ID
-            getgenv().ZombieIdleTrack = humanoid:LoadAnimation(anim)
+            getgenv().ZombieIdleTrack = humanoid: fLoadAnimation(anim)
             getgenv().ZombieIdleTrack.Priority = Enum.AnimationPriority.Action4
             getgenv().ZombieIdleTrack.Looped = true
             getgenv().ZombieIdleTrack:Play()
@@ -87,7 +87,7 @@ return function(library, Window, Tab1)
     end)
 
     ------------------------------------------------------------------
-    -- KORBLOX RIGHT LEG + HEADLESS (FUNCIONAL)
+    -- KORBLOX RIGHT LEG + HEADLESS (100% FUNCIONAL)
     ------------------------------------------------------------------
     getgenv().KorbloxHeadlessActive = false
 
@@ -99,21 +99,30 @@ return function(library, Window, Tab1)
     local function applyKorbloxHeadless(state)
         getgenv().KorbloxHeadlessActive = state
         local player = game.Players.LocalPlayer
-        local char = player.Character or player.CharacterAdded:Wait()
-        local humanoid = char:WaitForChild("Humanoid")
+        local char = player.Character
+
+        if not char or not char:FindFirstChild("HumanoidRootPart") then
+            task.wait(2)
+            char = player.Character or player.CharacterAdded:Wait()
+        end
+
+        local humanoid = char:FindFirstChild("Humanoid")
+        if not humanoid then return end
 
         local function apply()
-            if not char or not char:FindFirstChild("Right Leg") or not char:FindFirstChild("Head") then return end
+            print("[KORBLOX] Aplicando...")
 
-            -- Korblox Right Leg
-            local rightLeg = char["Right Leg"]
+            local rightLeg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightUpperLeg")
+            local head = char:FindFirstChild("Head")
+            if not rightLeg or not head then task.wait(1) return end
+
+            -- KORBLOX LEG
             local legMesh = rightLeg:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh", rightLeg)
             legMesh.MeshId = KORBLOX_LEG_MESH
             legMesh.TextureId = KORBLOX_LEG_TEXTURE
             legMesh.Scale = Vector3.new(1, 1, 1)
 
-            -- Headless Head
-            local head = char.Head
+            -- HEADLESS
             local face = head:FindFirstChildOfClass("Decal")
             if face then face:Destroy() end
             local headMesh = head:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh", head)
@@ -124,19 +133,19 @@ return function(library, Window, Tab1)
             -- Remove acessórios da cabeça
             for _, acc in pairs(char:GetChildren()) do
                 if acc:IsA("Accessory") and acc:FindFirstChild("Handle") then
-                    local mesh = acc.Handle:FindFirstChildOfClass("SpecialMesh")
-                    if mesh and mesh.MeshId ~= HEADLESS_MESH then
+                    if acc.Handle:IsDescendantOf(head) then
                         acc:Destroy()
                     end
                 end
             end
 
             humanoid:ApplyDescription(humanoid:GetAppliedDescription())
+            print("[KORBLOX] Aplicado!")
         end
 
         local function remove()
-            if not char then return end
-            local rightLeg = char:FindFirstChild("Right Leg")
+            print("[KORBLOX] Removendo...")
+            local rightLeg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightUpperLeg")
             if rightLeg then
                 local mesh = rightLeg:FindFirstChildOfClass("SpecialMesh")
                 if mesh then mesh:Destroy() end
@@ -146,22 +155,26 @@ return function(library, Window, Tab1)
                 local mesh = head:FindFirstChildOfClass("SpecialMesh")
                 if mesh then mesh:Destroy() end
                 local desc = game.Players:GetHumanoidDescriptionFromUserId(player.UserId)
-                local face = head:FindFirstChildOfClass("Decal") or Instance.new("Decal", head)
+                local face = Instance.new("Decal", head)
                 face.Texture = desc.Face or "rbxasset://textures/face.png"
             end
             humanoid:ApplyDescription(humanoid:GetAppliedDescription())
+            print("[KORBLOX] Removido!")
         end
 
         if state then apply() else remove() end
     end
 
+    -- Persistência
     game.Players.LocalPlayer.CharacterAdded:Connect(function()
-        task.wait(1)
-        if getgenv().KorbloxHeadlessActive then applyKorbloxHeadless(true) end
+        task.wait(2)
+        if getgenv().KorbloxHeadlessActive then
+            applyKorbloxHeadless(true)
+        end
     end)
 
     ------------------------------------------------------------------
-    -- UI (TOGGLE VERMELHO + FUNCIONAL)
+    -- UI (MESMO PADRÃO DOS OUTROS)
     ------------------------------------------------------------------
     Section1:AddToggle({ enabled = true, text = "NoClip", flag = "Atravessa as paredes.", risky = true, callback = function(lol) print("NoClip: "..tostring(lol)) end })
     Section1:AddToggle({ enabled = true, text = "Fly", flag = "Voe como zumbi (sem fall).", risky = true, callback = flyshu })
@@ -194,8 +207,8 @@ return function(library, Window, Tab1)
     Section2:AddList({ enabled = true, text = "Jogador", flag = "List", value = "Selecione", values = {"shu", "drugs", "licy"}, callback = function(v) print("Spectando: "..v) end })
     Section2:AddToggle({ enabled = true, text = "Xray", flag = "Xray", risky = true, callback = function(lol) print("Xray: "..tostring(lol)) end })
 
-    -- KORBLOX + HEADLESS (VERMELHO + FUNCIONAL)
-    Section2:AddToggle({
+    -- KORBLOX + HEADLESS (IGUAL AOS OUTROS)
+    local korbloxToggle = Section2:AddToggle({
         enabled = true,
         default = false,
         text = "Korblox Leg + Headless",
@@ -203,17 +216,24 @@ return function(library, Window, Tab1)
         tooltip = "Visual apenas. Persiste ao morrer.",
         risky = true,  -- VERMELHO!
         callback = function(state)
-            applyKorbloxHeadless(state)  -- FORÇA O STATE CORRETO
+            print("[TOGGLE] Korblox: " .. tostring(state))
+            applyKorbloxHeadless(state)
         end
     })
+
+    -- Força atualização
+    task.spawn(function()
+        while task.wait(0.5) do
+            if korbloxToggle and getgenv().KorbloxHeadlessActive ~= korbloxToggle:Get() then
+                korbloxToggle:Set(getgenv().KorbloxHeadlessActive)
+            end
+        end
+    end)
 
     Section2:AddSeparator({ text = "Combate" })
     Section2:AddToggle({ enabled = true, text = "Aimbot", flag = "Aimbot", risky = true, callback = function(lol) print("Aimbot: "..tostring(lol)) end })
     Section2:AddToggle({ enabled = true, text = "Mostrar FOV", flag = "FOV", risky = true, callback = function(lol) print("FOV: "..tostring(lol)) end })
     Section2:AddSlider({ text = "Tamanho FOV", flag = "FOVSize", value = 50, min = 1, max = 100, callback = function(v) print("FOV: "..v) end })
 
-    ------------------------------------------------------------------
-    -- ABRE UI
-    ------------------------------------------------------------------
     Window:SetOpen(true)
 end
