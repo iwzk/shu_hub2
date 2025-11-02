@@ -1,0 +1,418 @@
+-- shu_full_hub.lua → SEU CÓDIGO ORIGINAL 100% INALTERADO
+-- Recebe: library, Window, Tab1
+
+return function(library, Window, Tab1)
+    getgenv().Config = {
+        Invite = "Shu hub",
+        Version = "0.0",
+    }
+
+    getgenv().luaguardvars = {
+        DiscordName = "username#0000",
+    }
+
+    local Settings = library:CreateSettingsTab(Window)
+    local sections = {
+        Section1 = Tab1:AddSection("Geral", 1),
+        Section2 = Tab1:AddSection("Exploits", 2),
+    }
+
+    ------------------------------------------------------------------
+    -- FLY PERFEITO: SEGUE CÂMERA EM TEMPO REAL (COMO ANDAR NORMAL)
+    ------------------------------------------------------------------
+    getgenv().FlyActive = getgenv().FlyActive or false
+    getgenv().FlyBV = nil
+    getgenv().FlyRunService = nil
+
+    local function flyshu(state)
+        getgenv().FlyActive = state
+        local player = game.Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local root = char:WaitForChild("HumanoidRootPart")
+
+        local UIS = game:GetService("UserInputService")
+        local RunService = game:GetService("RunService")
+        local cam = workspace.CurrentCamera
+
+        local speed = 60
+
+        local function updateFly()
+            if not getgenv().FlyActive or not getgenv().FlyBV or not getgenv().FlyBV.Parent then return end
+
+            local move = Vector3.new(
+                (UIS:IsKeyDown(Enum.KeyCode.D) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.A) and 1 or 0),
+                (UIS:IsKeyDown(Enum.KeyCode.Space) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.LeftShift) and 1 or 0),
+                (UIS:IsKeyDown(Enum.KeyCode.S) and 1 or 0) - (UIS:IsKeyDown(Enum.KeyCode.W) and 1 or 0)
+            )
+
+            if move.Magnitude > 0 then
+                move = move.Unit
+            end
+
+            local worldMove = cam.CFrame:VectorToWorldSpace(move)
+            getgenv().FlyBV.Velocity = worldMove * speed
+        end
+
+        local function startFly()
+            if getgenv().FlyBV and getgenv().FlyBV.Parent then getgenv().FlyBV:Destroy() end
+            if getgenv().FlyRunService then getgenv().FlyRunService:Disconnect() end
+
+            getgenv().FlyBV = Instance.new("BodyVelocity")
+            getgenv().FlyBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            getgenv().FlyBV.P = 3000
+            getgenv().FlyBV.Velocity = Vector3.zero
+            getgenv().FlyBV.Parent = root
+
+            getgenv().FlyRunService = RunService.RenderStepped:Connect(updateFly)
+        end
+
+        local function stopFly()
+            if getgenv().FlyBV and getgenv().FlyBV.Parent then
+                getgenv().FlyBV:Destroy()
+                getgenv().FlyBV = nil
+            end
+            if getgenv().FlyRunService then
+                getgenv().FlyRunService:Disconnect()
+                getgenv().FlyRunService = nil
+            end
+        end
+
+        if state then
+            startFly()
+        else
+            stopFly()
+        end
+    end
+
+    -- Persistir ao respawn
+    game.Players.LocalPlayer.CharacterAdded:Connect(function()
+        task.wait()
+        if getgenv().FlyActive then
+            flyshu(true)
+        end
+    end)
+
+    ------------------------------------------------------------------
+    -- UI ORIGINAL (100% MANTIDA)
+    ------------------------------------------------------------------
+
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "NoClip",
+        flag = "Atravessa as paredes.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "Fly",
+        flag = "Faz o player voar.",
+        tooltip = "",
+        risky = true,
+        callback = flyshu
+    })
+
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "Fling",
+        flag = "Lança outros jogadores para longe.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section1:AddSeparator({
+        text = "Speed & Jump"
+    })
+
+    sections.Section1:AddSlider({
+        text = "Player Speed", 
+        flag = "Speed:", 
+        suffix = "", 
+        value = 16,
+        min = 16, 
+        max = 99,
+        increment = 1,
+        tooltip = "",
+        risky = false,
+        callback = function(v) 
+            print("Velocidade do player: : ".. v)
+        end
+    })
+
+    sections.Section1:AddSlider({
+        text = "Player Jump", 
+        flag = "Jump:", 
+        suffix = "", 
+        value = 16,
+        min = 16, 
+        max = 99,
+        increment = 1,
+        tooltip = "",
+        risky = false,
+        callback = function(v) 
+            print("Pulo do jogador: ".. v)
+        end
+    })
+
+    sections.Section1:AddSeparator({
+        text = "Outros"
+    })
+
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "Anti AFK",
+        flag = "Te impede de ser desconectado por inatividade.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "Free Cam",
+        flag = "Camera livre.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "Building Tools",
+        flag = "Te da a Building Tools.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section1:AddToggle({
+        enabled = true,
+        text = "Ghost mode",
+        flag = "Deixa o jogador invisivel.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Auto Pesca",
+        flag = "Pesca automaticamente.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddSlider({
+        text = "Velocida da pesca", 
+        flag = "Velocidade da pesca", 
+        suffix = "", 
+        value = 10,
+        min = 10, 
+        max = 50,
+        increment = 1,
+        tooltip = "",
+        risky = false,
+        callback = function(v) 
+            print("Pulo do jogador: ".. v)
+        end
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Vender peixes",
+        flag = "Vende os peixes automaticamente.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddSlider({
+        text = "Tempo entre vendas (Minutos)", 
+        flag = "Tempo entre vendas", 
+        suffix = "", 
+        value = 5,
+        min = 5, 
+        max = 30,
+        increment = 1,
+        tooltip = "",
+        risky = false,
+        callback = function(v) 
+            print("Tempo entre vendas: ".. v)
+        end
+    })
+
+    sections.Section2:AddSeparator({
+        text = "Chat"
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Privado explanado",
+        flag = "Vê o privado de outros players.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Esconder chat",
+        flag = "Esconde o chat.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddSeparator({
+        text = "Visual"
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "ESP",
+        flag = "Esp.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddSlider({
+        text = "Renderização do ESP", 
+        flag = "Renderização", 
+        suffix = "", 
+        value = 50,
+        min = 50, 
+        max = 100,
+        increment = 1,
+        tooltip = "",
+        risky = false,
+        callback = function(v) 
+            print("Tempo entre vendas: ".. v)
+        end
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Espectar player",
+        flag = "Esp.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddList({
+        enabled = true,
+        text = "Espectar player",
+        flag = "List_1",
+        multi = false,
+        tooltip = "Assiste a tela de um jogador.",
+        risky = false,
+        dragging = false,
+        focused = false,
+        value = "Selecione um jogador",
+        values = {
+            "shu",
+            "drugs",
+            "licy"
+        },
+        callback = function(v)
+            print("List Value Is Now : "..v)
+        end
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Xray",
+        flag = "Esp.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Korblox & Headless",
+        flag = "Esp.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddSeparator({
+        text = "Combate"
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Aimbot",
+        flag = "Mira automaticamente.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddToggle({
+        enabled = true,
+        text = "Mostrar FOV",
+        flag = "Mostra o Fov do aimbot.",
+        tooltip = "",
+        risky = true,
+        callback = function(lol)
+            print("Toggle Is Now Set To : ".. lol)
+        end
+    })
+
+    sections.Section2:AddSlider({
+        text = "Tamanho do FOV", 
+        flag = "FOV", 
+        suffix = "", 
+        value = 50,
+        min = 1, 
+        max = 100,
+        increment = 1,
+        tooltip = "",
+        risky = false,
+        callback = function(v) 
+            print("Tempo entre vendas: ".. v)
+        end
+    })
+
+    ------------------------------------------------------------------
+    -- ABRIR A UI AUTOMATICAMENTE
+    ------------------------------------------------------------------
+    Window:SetOpen(true)
+end
