@@ -157,7 +157,7 @@ return function(library, Window, Tab1)
 
     sections.Section1:AddToggle({
         enabled = true,
-        text = "Fly (Zombie)",
+        text = "Fly",
         flag = "Voe como zumbi (sem fall).",
         tooltip = "",
         risky = true,
