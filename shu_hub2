@@ -1,6 +1,6 @@
--- shu_hub2.lua → Shu Hub 2 (NoClip + Fly + Zombie Idle FUNCIONANDO)
--- Baseado no seu repo: https://raw.githubusercontent.com/iwzk/shu-hub/refs/heads/main/shu_source
--- NOCLIP 100% FUNCIONAL | UI ORIGINAL | SEM ERRO
+-- shu_hub2.lua → Shu Hub 2 (NOCLIP 100% + FLY + ZOMBIE IDLE)
+-- Repositório: https://github.com/iwzk/shu-hub
+-- NOCLIP ATRAVESSA TUDO | FLY SEM FALL | UI ORIGINAL
 
 return function(library, Window, Tab1)
     getgenv().Config = {
@@ -19,7 +19,7 @@ return function(library, Window, Tab1)
     }
 
     ------------------------------------------------------------------
-    -- FLY + ZOMBIE IDLE (SEU ORIGINAL – FUNCIONANDO)
+    -- FLY + ZOMBIE IDLE (100% FUNCIONAL – SEM ANIMAÇÃO DE QUEDA)
     ------------------------------------------------------------------
     getgenv().FlyActive = getgenv().FlyActive or false
     getgenv().FlyBV = nil
@@ -117,20 +117,20 @@ return function(library, Window, Tab1)
     end
 
     ------------------------------------------------------------------
-    -- NOCLIP (100% FUNCIONAL – CORRIGIDO E TESTADO)
+    -- NOCLIP 100% FUNCIONAL — ATRAVESSA TUDO (PAREDES, CHÃO, OBJETOS)
     ------------------------------------------------------------------
     getgenv().NoClipActive = getgenv().NoClipActive or false
-    getgenv().NoClipStepped = nil
-    getgenv().NoClipHeartbeat = nil
+    getgenv().NoClipLoop = nil
+    getgenv().NoClipTask = nil
 
     local function toggleNoClip(state)
         getgenv().NoClipActive = state
-        local RunService = game:GetService("RunService")
         local player = game.Players.LocalPlayer
+        local RunService = game:GetService("RunService")
 
-        -- Desliga conexões antigas
-        if getgenv().NoClipStepped then getgenv().NoClipStepped:Disconnect() end
-        if getgenv().NoClipHeartbeat then getgenv().NoClipHeartbeat:Disconnect() end
+        -- Desliga tudo
+        if getgenv().NoClipLoop then getgenv().NoClipLoop:Disconnect() end
+        if getgenv().NoClipTask then getgenv().NoClipTask = nil end
 
         if not state then
             local char = player.Character
@@ -144,26 +144,34 @@ return function(library, Window, Tab1)
             return
         end
 
-        -- Stepped: atualiza partes principais
-        getgenv().NoClipStepped = RunService.Stepped:Connect(function()
+        -- Loop principal (Stepped)
+        getgenv().NoClipLoop = RunService.Stepped:Connect(function()
             if not getgenv().NoClipActive then return end
             local char = player.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            for _, part in pairs(char:GetChildren()) do
+
+            for _, part in pairs(char:GetDescendants()) do
                 if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
                     part.CanCollide = false
                 end
             end
+
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum:ChangeState(Enum.HumanoidStateType.Physics)
+            end
         end)
 
-        -- Heartbeat: reforça em partes novas (acessórios, tools, etc.)
-        getgenv().NoClipHeartbeat = RunService.Heartbeat:Connect(function()
-            if not getgenv().NoClipActive then return end
-            local char = player.Character
-            if char then
-                for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                        part.CanCollide = false
+        -- Reforço a cada 0.05s (garante que NADA reative colisão)
+        getgenv().NoClipTask = task.spawn(function()
+            while getgenv().NoClipActive do
+                task.wait(0.05)
+                local char = player.Character
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                            part.CanCollide = false
+                        end
                     end
                 end
             end
@@ -171,16 +179,20 @@ return function(library, Window, Tab1)
     end
 
     ------------------------------------------------------------------
-    -- PERSISTÊNCIA AO RESPAWN
+    -- PERSISTÊNCIA AO RESPAWN (FLY + NOCLIP)
     ------------------------------------------------------------------
     game.Players.LocalPlayer.CharacterAdded:Connect(function()
-        task.wait(1)
-        if getgenv().FlyActive then flyshu(true) end
-        if getgenv().NoClipActive then toggleNoClip(true) end
+        task.wait(1.2)
+        if getgenv().FlyActive then
+            flyshu(true)
+        end
+        if getgenv().NoClipActive then
+            toggleNoClip(true)
+        end
     end)
 
     ------------------------------------------------------------------
-    -- UI (100% ORIGINAL – SÓ CALLBACK DO NOCLIP ATUALIZADO)
+    -- UI (100% ORIGINAL – SÓ CALLBACKS ATUALIZADOS)
     ------------------------------------------------------------------
     sections.Section1:AddToggle({
         enabled = true,
@@ -188,7 +200,7 @@ return function(library, Window, Tab1)
         flag = "Atravessa as paredes.",
         tooltip = "",
         risky = true,
-        callback = toggleNoClip  -- NOCLIP FUNCIONA AQUI
+        callback = toggleNoClip
     })
 
     sections.Section1:AddToggle({
@@ -219,7 +231,7 @@ return function(library, Window, Tab1)
     sections.Section1:AddToggle({ enabled = true, text = "Building Tools", flag = "Tools", risky = true, callback = function(lol) print("Tools: " .. tostring(lol)) end })
     sections.Section1:AddToggle({ enabled = true, text = "Ghost mode", flag = "Invisível", risky = true, callback = function(lol) print("Ghost: " .. tostring(lol)) end })
 
-    -- Exploits (mantido igual ao seu original)
+    -- Exploits
     sections.Section2:AddToggle({ enabled = true, text = "Auto Pesca", flag = "Auto Pesca", risky = true, callback = function(lol) print("Auto Pesca: " .. tostring(lol)) end })
     sections.Section2:AddSlider({ text = "Vel. Pesca", flag = "Vel", value = 10, min = 10, max = 50, callback = function(v) print("Vel Pesca: " .. v) end })
     sections.Section2:AddToggle({ enabled = true, text = "Vender Peixes", flag = "Vender", risky = true, callback = function(lol) print("Vender: " .. tostring(lol)) end })
@@ -251,5 +263,5 @@ return function(library, Window, Tab1)
     -- ABRIR UI
     ------------------------------------------------------------------
     Window:SetOpen(true)
-    print("Shu Hub 2 Carregado! NoClip + Fly 100% Funcionais.")
+    print("Shu Hub 2 Carregado! NOCLIP 100% + FLY FUNCIONAIS.")
 end
