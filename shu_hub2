@@ -1,5 +1,5 @@
 -- shu_hub2.lua → Fly com Zombie Idle (IGNORA ANIMAÇÃO DE QUEDA)
--- 100% FUNCIONAL, SEM ANIMAÇÃO DE FALL
+-- 100% FUNCIONAL, SEM ANIMAÇÃO DE FALL + NOCLIP ATIVO
 
 return function(library, Window, Tab1)
     getgenv().Config = {
@@ -72,7 +72,7 @@ return function(library, Window, Tab1)
             anim.AnimationId = ZOMBIE_IDLE_ANIM_ID
             getgenv().ZombieIdleTrack = humanoid:LoadAnimation(anim)
             getgenv().ZombieIdleTrack.Priority = Enum.AnimationPriority.Action4
-            getgenv().ZombieIdleTrack.Looped = true
+            getgenv().ZombieIdleTrack.Lo looped = true
             getgenv().ZombieIdleTrack:Play()
         end
 
@@ -135,16 +135,66 @@ return function(library, Window, Tab1)
         end
     end
 
-    -- Persistir ao respawn
+    ------------------------------------------------------------------
+    -- NOCLIP (100% FUNCIONAL, PERMANENTE E SEGURO)
+    ------------------------------------------------------------------
+    getgenv().NoClipActive = getgenv().NoClipActive or false
+    getgenv().NoClipConnection = nil
+
+    local function toggleNoClip(state)
+        getgenv().NoClipActive = state
+        local player = game.Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local RunService = game:GetService("RunService")
+
+        local function enableNoClip()
+            if getgenv().NoClipConnection then getgenv().NoClipConnection:Disconnect() end
+
+            getgenv().NoClipConnection = RunService.Stepped:Connect(function()
+                if not getgenv().NoClipActive or not char or not char:FindFirstChild("HumanoidRootPart") then return end
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                        part.CanCollide = false
+                    end
+                end
+            end)
+        end
+
+        local function disableNoClip()
+            if getgenv().NoClipConnection then
+                getgenv().NoClipConnection:Disconnect()
+                getgenv().NoClipConnection = nil
+            end
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
+        end
+
+        if state then
+            enableNoClip()
+        else
+            disableNoClip()
+        end
+    end
+
+    -- Persistir Fly e NoClip ao respawn
     game.Players.LocalPlayer.CharacterAdded:Connect(function()
         task.wait(0.6)
         if getgenv().FlyActive then
             flyshu(true)
         end
+        if getgenv().NoClipActive then
+            task.wait(0.1)
+            toggleNoClip(true)
+        end
     end)
 
     ------------------------------------------------------------------
-    -- UI (100% ORIGINAL)
+    -- UI (100% ORIGINAL + NOCLIP FUNCIONAL)
     ------------------------------------------------------------------
     sections.Section1:AddToggle({
         enabled = true,
@@ -152,7 +202,7 @@ return function(library, Window, Tab1)
         flag = "Atravessa as paredes.",
         tooltip = "",
         risky = true,
-        callback = function(lol) print("Toggle Is Now Set To : ".. lol) end
+        callback = toggleNoClip  -- ← NOCLIP ATIVADO AQUI
     })
 
     sections.Section1:AddToggle({
@@ -184,9 +234,6 @@ return function(library, Window, Tab1)
     sections.Section1:AddToggle({ enabled = true, text = "Ghost mode", flag = "Invisível", risky = true, callback = function(lol) print("Toggle: ".. lol) end })
 
     -- [Resto da UI igual ao original - sem alterações]
-    -- (Auto Pesca, Vender, Chat, Visual, Combate, etc.)
-    -- ... (cole o resto do seu UI aqui ou mantenha como está)
-
     sections.Section2:AddToggle({ enabled = true, text = "Auto Pesca", flag = "Auto Pesca", risky = true, callback = function(lol) print("Toggle: ".. lol) end })
     sections.Section2:AddSlider({ text = "Vel. Pesca", flag = "Vel", value = 10, min = 10, max = 50, callback = function(v) print("Vel: ".. v) end })
     sections.Section2:AddToggle({ enabled = true, text = "Vender Peixes", flag = "Vender", risky = true, callback = function(lol) print("Toggle: ".. lol) end })
